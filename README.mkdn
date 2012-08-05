@@ -1,0 +1,8 @@
+minebot - MineCraft BASH IRC Bot
+===============
+
+About
+---------------------
+
+minebot is an IRC bot that reports events from a local MineCraft server by monitoring
+the log file. It is written in BASH and based of off BIRC.
