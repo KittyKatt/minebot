@@ -29,8 +29,26 @@ BIRCOWNER="KittyKatt!kittykatt@netadmin.silverirc.com"
 
 minebot_version="2.3.4"
 
+function findConfig() {
+	if [ ! -f /all/minebot/config ]; then
+		echo "mb_verbosity = 2" > /all/minebot/config
+	fi
+}
+
 get_pid() {
 	MY_PID=$(pidof -o %PPID "/bin/bash /all/minebot/minebot.sh")
+}
+
+function findVerbosity() {
+	local mb_verbosity=$(cat /all/minebot/config | grep "mb_verbosity" | awk -F'=' '{print $2}')
+	echo $mb_verbosity
+}
+
+function setVerbosity() {
+	local verbosity_level="$1"
+	old_verbosity_level=$(findVerbosity)
+	sed 's/mb_verbosity = '$old_verbosity_level'//' /all/minebot/config > /all/minebot/config
+	echo "mb_verbosity = $verbosity_level" > /all/minebot/config
 }
 
 #################################################################################################
@@ -120,64 +138,96 @@ birc_parse() {
 			birc_cleanup
 		fi
 	fi
+
+	# Set verbosity
+	if [[ "$1" =~ "!setverbosity" ]]; then
+		issue_nickhost=$(echo "$1" | awk '{print $1}')
+		if [ "$issue_nickhost" == ":${BIRCOWNER}" ]; then
+			local mb_message=$(echo "$1" | awk -F':' '{print $3}')
+			old_verbosity_level=$(findVerbosity)
+			new_verbosity_level=$(echo "$mb_message" | awk '{print $2}')
+			setVerbosity "$new_verbosity_level"
+			echo -e "${tcolor5}[${tcolor1} IRC ${tcolor5}]${tcolor0} PRIVMSG ${BIRCCHAN} New verbosity level set to $new_verbosity_level. (Old: $old_verbosity_level)"
+			echo "PRIVMSG ${BIRCCHAN} New verbosity level set to $new_verbosity_level. (Old: $old_verbosity_level)" >> "$2"
+		fi
+	fi
 }
 
 birc_parse_m() {
 
 	# Parser for logged in
 	# if [[ "$1" =~ "logged in with entity" ]]; then
-	if [[ "$1" =~ "logged in" ]]; then
-		logged_nick=$(echo "$1" | awk '{print $4}' | sed 's/\[\/[0-9.]*:[0-9]*\]//')
-		echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color4}<==${reset} ${logged_nick} has joined the game."
-		echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color4}<==${reset}  ${logged_nick} has joined the game." >> "$2"
+	if [[ "$1" =~ "logged in with entity" ]]; then
+		if [[ $(findVerbosity) > "0" ]]; then
+			logged_nick=$(echo "$1" | awk '{print $4}' | sed 's/\[\/[0-9.]*:[0-9]*\]//')
+			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color4}<==${reset} ${logged_nick} has joined the game."
+			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color4}<==${reset}  ${logged_nick} has joined the game." >> "$2"
+		fi
 	fi;
 
 	# Parser for kicked
 	if [[ "$1" =~ "server command: kick" ]]; then
-		kicked_nick=$(echo "$1" | awk '{print $NF}')
-		kicker_nick=$(echo "$1" | awk '{print $4}')
-		echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}."
-		echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}." >> "$2"
+		if [[ $(findVerbosity) > "1" ]]; then
+			kicked_nick=$(echo "$1" | awk '{print $NF}')
+			kicker_nick=$(echo "$1" | awk '{print $4}')
+			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}."
+			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}." >> "$2"
+		fi
 	fi;
 
 	# Parser for logged out
 	# if [[ "$1" =~ "lost connection: disconnect.quitting" ]]; then
 	if [[ "$1" =~ "lost connection:" ]]; then
-		logged_nick=$(echo "$1" | awk '{print $4}')
-		if [[ "$1" =~ "disconnect.endOfStream" ]]; then logged_reason="End of Stream"; fi
-		if [[ "$1" =~ "disconnect.overflow" ]]; then logged_reason="Overflow"; fi
-		if [[ "$1" =~ "disconnect.genericReason" ]]; then logged_reason="Other"; fi
-		#if [[ "${logged_reason}" != "Other" ]]; then
-		#	echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game abnormally."
-		#	echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game abnormally." >> "$2"
-		#else
-			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game."
-			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game." >> "$2"
-		#fi
+		if [[ $(findVerbosity) > "0" ]]; then
+			logged_nick=$(echo "$1" | awk '{print $4}')
+			if [[ "$1" =~ "disconnect.endOfStream" ]]; then logged_reason="End of Stream"; fi
+			if [[ "$1" =~ "disconnect.overflow" ]]; then logged_reason="Overflow"; fi
+			if [[ "$1" =~ "disconnect.genericReason" ]]; then logged_reason="Other"; fi
+			#if [[ "${logged_reason}" != "Other" ]]; then
+			#	echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game abnormally."
+			#	echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game abnormally." >> "$2"
+			#else
+				echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game."
+				echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${logged_nick} has exited the game." >> "$2"
+			#fi
+		fi
 	fi;
 
 	# Parser for SET/ADD TIME
 	if [[ "$1" =~ "server command: time set" ]]; then
-		issued_nick=$(echo "$1" | awk '{print $4}')
-		time_set_to=$(echo "$1" | awk '{print $NF}')
-		echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has set the in-game time to ${time_set_to}."
-		echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has set the in-game time to ${time_set_to}." >> "$2"
+		if [[ $(findVerbosity) > "3" ]]; then
+			issued_nick=$(echo "$1" | awk '{print $4}')
+			time_set_to=$(echo "$1" | awk '{print $NF}')
+			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has set the in-game time to ${time_set_to}."
+			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has set the in-game time to ${time_set_to}." >> "$2"
+		fi
 	fi;
 	if [[ "$1" =~ "server command: time add" ]]; then
-		issued_nick=$(echo "$1" | awk '{print $4}')
-		time_set_to=$(echo "$1" | awk '{print $NF}')
-		echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has added ${time_set_to} to the in-game time."
-		echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has added ${time_set_to} to the in-game time." >> "$2"
+		if [[ $(findVerbosity) > "3" ]]; then
+			issued_nick=$(echo "$1" | awk '{print $4}')
+			time_set_to=$(echo "$1" | awk '{print $NF}')
+			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has added ${time_set_to} to the in-game time."
+			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has added ${time_set_to} to the in-game time." >> "$2"
+		fi
 	fi;
 
 	# parser for chat
 	if echo "$1" | grep '<.*> IRC:' >/dev/null 2>&1; then
-		chat_nick=$(echo "$1" | awk '{print $4}' | sed -e 's/<//' -e 's/>//')
-		chat_message=$(echo "$1" | awk -v nr=5 '{ for (x=nr; x<=NF; x++) {printf $x " "; }; print " " }' | sed 's/IRC: //')	
-		echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold} ${color1}<"${reset}"${chat_nick}${color1}>${reset} ${chat_message}"
-		echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold} ${color1}<"${reset}"${chat_nick}${color1}>${reset} ${chat_message}" >> "$2"
+		if [[ $(findVerbosity) > "2" ]]; then
+			chat_nick=$(echo "$1" | awk '{print $4}' | sed -e 's/<//' -e 's/>//')
+			chat_message=$(echo "$1" | awk -v nr=5 '{ for (x=nr; x<=NF; x++) {printf $x " "; }; print " " }' | sed 's/IRC: //')	
+			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold} ${color1}<"${reset}"${chat_nick}${color1}>${reset} ${chat_message}"
+			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold} ${color1}<"${reset}"${chat_nick}${color1}>${reset} ${chat_message}" >> "$2"
+		fi
 	fi
-
+	if echo "$1" | grep '<.*>' >/dev/null 2>&1; then
+		if [[ $(findVerbosity) > "4" ]]; then
+			chat_nick=$(echo "$1" | awk '{print $4}' | sed -e 's/<//' -e 's/>//')
+			chat_message=$(echo "$1" | awk -v nr=5 '{ for (x=nr; x<=NF; x++) {printf $x " "; }; print " " }')	
+			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold} ${color1}<"${reset}"${chat_nick}${color1}>${reset} ${chat_message}"
+			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold} ${color1}<"${reset}"${chat_nick}${color1}>${reset} ${chat_message}" >> "$2"
+		fi
+	fi
 }
 
 
@@ -300,6 +350,7 @@ birc_parse_m() {
  echo -e "${tcolor5}[${tcolor1} IRC ${tcolor5}]${tcolor0} Joining channel $BIRCCHAN";
 	birc_join "$BIRCSOCK" "$BIRCCHAN";
 	birc_delayed_join "$BIRCSOCK" "$BIRCCHAN" "$BIRCJOIW";
+	findConfig
 
  echo -e "${tcolor5}[${tcolor3} INFO ${tcolor5}]${tcolor0} Now waiting for your messages on STDIN";
 	while true; do
