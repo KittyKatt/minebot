@@ -171,7 +171,7 @@ birc_parse_m() {
 			kicked_nick=$(echo "$1" | awk '{print $9}')
 			kicker_nick=$(echo "$1" | awk '{print $4}')
 			kicked_reason=$(echo "$1" |  awk '{ s = ""; for (i = 10; i <= NF; i++) s = s $i " "; print s }')
-			if [ -n ${kicked_reason} ]; then kicked_reason="None given."; fi
+			if [ -z ${kicked_reason} ]; then kicked_reason="None given."; fi
 			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}. (Reason: ${kicked_reason})"
 			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}. (Reason: ${kicked_reason})" >> "$2"
 		fi
