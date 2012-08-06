@@ -166,10 +166,11 @@ birc_parse_m() {
 	fi;
 
 	# Parser for kicked
-	if [[ "$1" =~ "server command: kick" ]]; then
+	if [[ "$1" =~ "server command: /kick" ]]; then
 		if [[ $(findVerbosity) > "1" ]]; then
-			kicked_nick=$(echo "$1" | awk '{print $NF}')
+			kicked_nick=$(echo "$1" | awk '{print $9}')
 			kicker_nick=$(echo "$1" | awk '{print $4}')
+			kicked_reason=$(echo "$1" |  awk '{ s = ""; for (i = 10; i <= NF; i++) s = s $i " "; print s }')
 			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}."
 			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color3}==>${reset}  ${kicked_nick} has been kicked from the game by ${kicker_nick}." >> "$2"
 		fi
@@ -194,7 +195,7 @@ birc_parse_m() {
 	fi;
 
 	# Parser for SET/ADD TIME
-	if [[ "$1" =~ "server command: time set" ]]; then
+	if [[ "$1" =~ "server command: /time set" ]]; then
 		if [[ $(findVerbosity) > "3" ]]; then
 			issued_nick=$(echo "$1" | awk '{print $4}')
 			time_set_to=$(echo "$1" | awk '{print $NF}')
@@ -202,7 +203,7 @@ birc_parse_m() {
 			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has set the in-game time to ${time_set_to}." >> "$2"
 		fi
 	fi;
-	if [[ "$1" =~ "server command: time add" ]]; then
+	if [[ "$1" =~ "server command: /time add" ]]; then
 		if [[ $(findVerbosity) > "3" ]]; then
 			issued_nick=$(echo "$1" | awk '{print $4}')
 			time_set_to=$(echo "$1" | awk '{print $NF}')
