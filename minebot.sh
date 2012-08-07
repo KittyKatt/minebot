@@ -25,7 +25,8 @@ TAILSLEEP=0.3
 TAILSLEEPM=2.5
 MINE_LOG='/all/minebot/server.log'
 # Owner
-BIRCOWNER="KittyKatt!kittykatt@netadmin.silverirc.com"
+# BIRCOWNER="KittyKatt!kittykatt@netadmin.silverirc.com"
+BIRCOWNER="@netadmin.silverirc.com"
 
 minebot_version="2.3.4"
 
@@ -132,7 +133,7 @@ birc_parse() {
 	# Shutdown
 	if [[ "$1" =~ "!shutdown" || "$1" =~ "${BIRCNICK}: shutdown" ]]; then
 		issue_nickhost=$(echo "$1" | awk '{print $1}')
-		if [ "$issue_nickhost" == ":${BIRCOWNER}" ]; then
+		if [[ "$issue_nickhost" =~ "${BIRCOWNER}" ]]; then
 			echo -e "${tcolor5}[${tcolor1} IRC ${tcolor5}]${tcolor0} PRIVMSG ${BIRCCHAN} Shutting down...."
 			echo "PRIVMSG ${BIRCCHAN} Shutting down...." >> "$2"
 			birc_cleanup
@@ -142,7 +143,7 @@ birc_parse() {
 	# Set verbosity
 	if [[ "$1" =~ "!setverbosity" ]]; then
 		issue_nickhost=$(echo "$1" | awk '{print $1}')
-		if [ "$issue_nickhost" == ":${BIRCOWNER}" ]; then
+		if [[ "$issue_nickhost" =~ "${BIRCOWNER}" ]]; then
 			local mb_message=$(echo "$1" | awk -F':' '{print $3}')
 			old_verbosity_level=$(findVerbosity)
 			new_verbosity_level=$(echo "$mb_message" | awk '{print $2}')
