@@ -223,6 +223,14 @@ birc_parse_m() {
 			# parser for known destinations
 			if [ "$teleported_coords" == "19,60,-30" ]; then
 				teleported_coords="VilleVille"
+			elif [ "$teleported_coords" == "-1525,69,722" ]; then
+				teleported_coords="IceVille"
+			elif [ "$teleported_coords" == "-973,60,716" ]; then
+				teleported_coords="A7's House"
+			elif [ "$teleported_coords" == "46,65,1531" ]; then
+				teleported_coords="Eevee's Mountains"
+			elif [ "$teleported_coords" == "-241,74,286" ]; then
+				teleported_coords="Katt's Castle"
 			fi
 			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${teleported_nick} was tele'd to ${teleported_coords}."
 			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${teleported_nick} was tele'd to ${teleported_coords}." >> "$2"
