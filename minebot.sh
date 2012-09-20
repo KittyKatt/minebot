@@ -28,7 +28,7 @@ MINE_LOG='/all/minebot/server.log'
 # BIRCOWNER="KittyKatt!kittykatt@netadmin.silverirc.com"
 BIRCOWNER="@netadmin.silverirc.com"
 
-minebot_version="2.3.4"
+minebot_version="2.3.7"
 
 function findConfig() {
 	if [ ! -f /all/minebot/config ]; then
@@ -215,11 +215,15 @@ birc_parse_m() {
 		fi
 	fi;
 
-	# parser for tele hubs
+	# parser for teleportation blocks (happy? :P)
 	if [[ "$1" =~ "@: Teleported" ]]; then
 		if [[ $(findVerbosity) > "2" ]]; then
 			teleported_nick=$(echo "$1" | awk '{print $6}')
-			teleported_coords=$(echo "$1" | awk '{print $8}')
+			teleported_coords=$(echo "$1" | awk '{print $8}' | sed 's/]//')
+			# parser for known destinations
+			if [ "$teleported_coords" == "19,60,-30" ]; then
+				teleported_coords="VilleVille"
+			fi
 			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${teleported_nick} was tele'd to ${teleported_coords}."
 			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${teleported_nick} was tele'd to ${teleported_coords}." >> "$2"
 		fi
