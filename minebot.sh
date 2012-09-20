@@ -205,6 +205,7 @@ birc_parse_m() {
 			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has set the in-game time to ${time_set_to}." >> "$2"
 		fi
 	fi;
+
 	if [[ "$1" =~ "server command: /time add" ]]; then
 		if [[ $(findVerbosity) > "3" ]]; then
 			issued_nick=$(echo "$1" | awk '{print $4}')
@@ -213,6 +214,17 @@ birc_parse_m() {
 			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${issued_nick} has added ${time_set_to} to the in-game time." >> "$2"
 		fi
 	fi;
+
+	# parser for tele hubs
+	if [[ "$1" =~ "@: Teleported" ]]; then
+		if [[ $(findVerbosity) > "2" ]]; then
+			teleported_nick=$(echo "$1" | awk '{print $6}')
+			teleported_coords=$(echo "$1" | awk '{print $8}')
+			echo -e "${tcolor5}[${tcolor2} MINECRAFT ${tcolor5}]${tcolor0}  PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${teleported_nick} was tele'd to ${teleported_coords}."
+			echo -e "PRIVMSG ${BIRCCHAN} ${bold}${color1}["${reset}"MineCraft${color1}]${bold}  ${color1}::${reset}  ${teleported_nick} was tele'd to ${teleported_coords}." >> "$2"
+		fi
+	fi
+			
 
 	# parser for chat
 	if echo "$1" | grep '<.*> IRC:' >/dev/null 2>&1; then
