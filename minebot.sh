@@ -226,7 +226,7 @@ birc_parse_m() {
 			elif [ "$teleported_coords" == "-1525,69,722" ]; then
 				teleported_coords="IceVille"
 			elif [ "$teleported_coords" == "-973,60,716" ]; then
-				teleported_coords="A7's House"
+				teleported_coords="ArcherSeven's Cabin"
 			elif [ "$teleported_coords" == "46,65,1531" ]; then
 				teleported_coords="Eevee's Mountains"
 			elif [ "$teleported_coords" == "-241,74,286" ]; then
